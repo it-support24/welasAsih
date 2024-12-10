@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Halaman Depan</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      /* Gradasi ungu sebagai latar belakang */
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      color: #fff;
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .background-title {
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 3rem;
+      font-weight: bold;
+      color: rgba(255, 255, 255, 1); /* Ubah menjadi warna putih penuh */
+      white-space: nowrap;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2; /* Agar berada di atas background-title */
+    }
+
+    .card {
+      position: relative;
+      width: 300px;
+      margin: 0 15px;
+      text-align: center;
+      border: 1px solid #ddd;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background-color: #fff;
+      color: #343a40;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    /* Hover effect for cards */
+    .card:hover {
+      background-color: #e9ecef; /* Warna abu-abu saat hover */
+      transform: translateY(-5px); /* Efek mengangkat sedikit */
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+
+    .btn {
+      background-color: #007bff;
+      color: #fff;
+    }
+
+    .btn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Judul besar di latar belakang -->
+  <div class="background-title">Kasir Kantin Kawandika</div>
+
+  <div class="container">
+    <!-- Card untuk Aplikasi Kasir -->
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Aplikasi Kasir</h5>
+        <p class="card-text">Klik tombol di bawah untuk masuk ke halaman</p>
+        <a href="Loginan Aplikasi Kasir.html" class="btn">Masuk</a>
+      </div>
+    </div>
+
+    <!-- Card untuk Menu Laporan Kasir -->
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Menu Laporan Kasir</h5>
+        <p class="card-text">Klik tombol di bawah untuk masuk ke halaman</p>
+        <a href="Loginan Dasboard.html" class="btn">Masuk</a>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

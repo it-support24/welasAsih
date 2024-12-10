@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Penghasilan</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+
+    .card {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border: none;
+    }
+
+    .header-text {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #343a40;
+    }
+
+    .table-responsive {
+      max-height: 300px;
+    }
+
+    .total-card {
+      background-color: #343a40;
+      color: #ffffff;
+    }
+
+    p {
+      font-size: 18px;
+      text-align: center;
+    }
+
+    /* Highlight list item on hover */
+    .list-group-item:hover {
+      background-color: #e9ecef;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container my-4">
+    <!-- Header -->
+    <div class="text-center mb-4">
+      <h1 class="header-text">Dashboard Penghasilan Kantin Solo</h1>
+    </div>
+
+    <!-- Filter Tanggal -->
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label for="start-date" class="form-label">Dari Tanggal:</label>
+        <input type="date" id="start-date" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label for="end-date" class="form-label">Hingga Tanggal:</label>
+        <input type="date" id="end-date" class="form-control">
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <button id="apply-filter" class="btn btn-primary w-100">Terapkan Filter</button>
+      </div>
+    </div>
+
+    <!-- Main Row -->
+    <div class="row">
+      <!-- Penghasilan per Kategori -->
+      <div class="col-md-4 mb-3">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Total Penghasilan per Kategori</h5>
+            <ul class="list-group" id="category-list">
+              <!-- Dynamic List -->
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rincian Item -->
+      <div class="col-md-8 mb-3">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Rincian Item</h5>
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover">
+                <thead class="table-light">
+                  <tr>
+                    <th>#</th>
+                    <th>Nama Produk</th>
+                    <th>Kategori</th>
+                    <th>Harga Satuan</th>
+                    <th>Kuantitas</th>
+                    <th>Harga Total</th>
+                    <th>Tanggal Transaksi</th>
+                    <th>Waktu Transaksi</th> <!-- Kolom baru untuk waktu -->
+                  </tr>
+                </thead>
+                <tbody id="item-table">
+                  <!-- Dynamic Rows -->
+                </tbody>
+              </table>
+            </div>
+            <!-- Changed button to a link for navigation -->
+            <a href="Tabel Transaksi Kasir.html" class="btn btn-primary mt-3">Lihat Semua Data</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Pendapatan -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card total-card text-center py-3">
+          <h4>Total Pendapatan: <span id="total-income" class="fw-bold">Rp 0</span></h4>
+          <p>Potongan 10%: <span id="discount-amount" class="fw-bold">Rp 0</span></p>
+          <p>Total Setelah Potongan: <span id="net-income" class="fw-bold">Rp 0</span></p>
+        </div>
+      </div>
+    </div>
+    <br>
+    <p>@Create By. Diky Alfian | 2024</p>
+
+    <script>
+      const SPREADSHEET_ID = "10laKj1Ix_80W6bz7Ili1_DW_wbvl-n43ccD5Pr9MsWE";
+      const SHEET_NAME = "Pembukuan";
+      const API_KEY = "AIzaSyDJWEwPRAg7sh0nQokqh5TiHsJ-mKS9ooo";
+
+      let allItems = []; // Menyimpan semua data item untuk diakses saat download CSV
+
+      async function fetchData() {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        return data.values.slice(4); // Mulai dari baris ke-5 (index 4) karena baris pertama adalah header
+      }
+
+      function formatCurrency(value) {
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(value);
+      }
+
+      function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID'); // Mengonversi ke format dd/mm/yyyy
+      }
+
+      function formatTime(timeString) {
+        // Cek apakah timeString sudah valid
+        const time = new Date(timeString);
+        if (isNaN(time)) {
+          return "Invalid Time"; // Jika tidak valid, tampilkan 'Invalid Time'
+        }
+        return time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      }
+
+      function filterByDate(items, startDate, endDate) {
+        return items.filter(item => {
+          const transactionDate = new Date(item.transactionDate);
+          const start = startDate ? new Date(startDate) : null;
+          const end = endDate ? new Date(endDate) : null;
+
+          return (!start || transactionDate >= start) && (!end || transactionDate <= end);
+        });
+      }
+
+      function renderData(data) {
+        const items = data.map(row => ({
+          name: row[0],
+          category: row[1],
+          price: parseFloat(row[2]),
+          quantity: parseInt(row[3]),
+          totalPrice: parseFloat(row[4]),
+          transactionDate: row[6], // Kolom G adalah "Tanggal Transaksi"
+          time: row[7], // Kolom H adalah "Waktu Transaksi"
+        }));
+
+        allItems = items;
+
+        const categoryMap = {};
+        items.forEach(item => {
+          if (item.totalPrice && !isNaN(item.totalPrice)) {
+            if (!categoryMap[item.category]) {
+              categoryMap[item.category] = 0;
+            }
+            categoryMap[item.category] += item.totalPrice;
+          }
+        });
+
+        const categoryList = document.getElementById("category-list");
+        categoryList.innerHTML = "";
+        Object.keys(categoryMap).forEach(category => {
+          const totalIncome = categoryMap[category];
+          const listItem = `
+            <li class="list-group-item d-flex justify-content-between align-items-center" onclick="filterItems('${category}')">
+              ${category}
+              <span class="badge bg-success">${formatCurrency(totalIncome)}</span>
+            </li>`;
+          categoryList.innerHTML += listItem;
+        });
+
+        filterItems(""); // Memanggil filter untuk menampilkan item awal
+      }
+
+      function filterItems(category = "") {
+        const startDate = document.getElementById("start-date").value;
+        const endDate = document.getElementById("end-date").value;
+
+        let filteredItems = allItems;
+        if (category) {
+          filteredItems = filteredItems.filter(item => item.category === category);
+        }
+        filteredItems = filterByDate(filteredItems, startDate, endDate);
+
+        const tableBody = document.getElementById("item-table");
+        const totalIncomeDisplay = document.getElementById("total-income");
+        const discountAmountDisplay = document.getElementById("discount-amount");
+        const netIncomeDisplay = document.getElementById("net-income");
+
+        let totalIncome = 0;
+
+        tableBody.innerHTML = filteredItems.map((item, index) => {
+          totalIncome += item.totalPrice;
+          return `<tr>
+                    <td>${index + 1}</td>
+                    <td>${item.name}</td>
+                    <td>${item.category}</td>
+                    <td>${formatCurrency(item.price)}</td>
+                    <td>${item.quantity}</td>
+                    <td>${formatCurrency(item.totalPrice)}</td>
+                    <td>${formatDate(item.transactionDate)}</td>
+                    <td>${formatTime(item.time)}</td> <!-- Tampilkan waktu transaksi -->
+                  </tr>`;
+        }).join("");
+
+        // Update total pendapatan
+        totalIncomeDisplay.textContent = formatCurrency(totalIncome);
+
+        // Hitung dan tampilkan potongan 10%
+        const discountAmount = totalIncome * 0.1;
+        discountAmountDisplay.textContent = formatCurrency(discountAmount);
+
+        // Hitung dan tampilkan total setelah potongan
+        const netIncome = totalIncome - discountAmount;
+        netIncomeDisplay.textContent = formatCurrency(netIncome);
+      }
+
+      document.getElementById("apply-filter").addEventListener("click", () => filterItems());
+      fetchData().then(renderData);
+
+        // Waktu habis (10 menit dalam milidetik)
+           const TIMEOUT_DURATION = 600000;
+      let timeout;
+
+      function resetTimeout() {
+        // Hapus timeout sebelumnya
+        clearTimeout(timeout);
+        // Atur timeout baru
+        timeout = setTimeout(() => {
+          window.location.href = "Halaman Depan Kasir.html";
+        }, TIMEOUT_DURATION);
+      }
+
+      // Tambahkan event listener untuk aktivitas pengguna
+      ["click", "mousemove", "keypress", "scroll", "touchstart"].forEach(event => {
+        document.addEventListener(event, resetTimeout);
+      });
+
+      // Mulai hitung waktu saat halaman dimuat
+      resetTimeout();
+
+    </script>
+</body>
+
+</html>
